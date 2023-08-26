@@ -1,7 +1,29 @@
+import pickle
 from collections import UserDict
 from datetime import datetime
 
 class AddressBook(UserDict):
+    
+    def add_record(self, record):
+        self.data[record.name.value] = record
+
+    def save_to_disk(self, filename):
+        with open(filename, 'wb') as file:
+            pickle.dump(self.data, file)
+
+    def load_from_disk(self, filename):
+        with open(filename, 'rb') as file:
+            self.data = pickle.load(file)
+
+    def search(self, query):
+        results = []
+        for record in self.data.values():
+            if (
+                query.lower() in record.name.value.lower()
+                or any(query in phone for phone in record.phones)
+            ):
+                results.append(record)
+        return results  
     def add_record(self, record):
         self.data[record.name.value] = record
         
@@ -80,24 +102,20 @@ class Birthday(Field):
 
 address_book = AddressBook()
 
-record1 = Record("John")
-phone1 = Phone("123456789")
-record1.add_phone(phone1)
-birthday1 = Birthday(datetime(1990, 5, 15))
-record1.birthday = birthday1
+address_book.save_to_disk("address_book.pkl")
 
-record2 = Record("Jane")
-phone2 = Phone("987654321")
-record2.add_phone(phone2)
-birthday2 = Birthday(datetime(1985, 8, 29))
-record2.birthday = birthday2
+address_book.load_from_disk("address_book.pkl")
 
-address_book.add_record(record1)
-address_book.add_record(record2)
+search_query = input("Enter search query: ")
+results = address_book.search(search_query)
 
-for record in address_book:
-    print("Name:", record.name.value)
-    print("Phones:", record.phones)
-    print("Birthday:", record.birthday.value if record.birthday else "N/A")
-    print("Days to Birthday:", record.days_to_birthday())
-    print()
+if results:
+    print("Search results:")
+    for record in results:
+        print("Name:", record.name.value)
+        print("Phones:", record.phones)
+        print("Birthday:", record.birthday.value if record.birthday else "N/A")
+        print("Days to Birthday:", record.days_to_birthday())
+        print()
+else:
+    print("No results found.")
